@@ -1,4 +1,3 @@
-#api key AIzaSyACg1er5gcDs_BDRIuQZPIRP5AxzYVjisg
 import pandas as pd
 import requests
 import os

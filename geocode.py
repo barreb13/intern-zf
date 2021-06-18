@@ -4,14 +4,16 @@ from pandas.core.dtypes.missing import notnull
 import requests
 import os
 
+# ****************************************** Constants ******************************************
 # Google API Key used for Maps API - Can use different key here if you have one
 API_KEY = os.environ.get('MAPS_API_KEY')
+#API_KEY = os.environ.get('MAPS_API_KEY')
 # Name of output file and its path
 output_file = ''
 # Name of input file and its path, '.' is the current working directory
 input_file = "./data-raw.csv"
 
-# Column Names - Edit as needed
+# ******************************** Column Names - Edit as needed ********************************
 # Column name in input_file that contains the full address
 address_column = ("ADDRESSSTREET")
 # City
@@ -19,6 +21,7 @@ city_column = ("City Place")
 # If no address, will have cross street to use
 cross_street_column = ("CROSSSTREET")
 
+# ************************************ Function Definitions **************************************
 # Function to get results from google
 def geocode(address):
     print('Geocoding...')
@@ -43,8 +46,6 @@ def geocode(address):
     print(lat,lon)
     return response
 
-
-
 # Function to parse data and get addresses to put in list
 # Returns list of addresses
 def getAddresses():
@@ -56,7 +57,7 @@ def plotResults():
     print('Plotting Results...')
 
 
-# Main function to control flow
+# ************************************** Main Function ******************************************
 def main():
     print('This is Main...')
     df = pd.read_csv(input_file)
