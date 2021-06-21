@@ -7,11 +7,12 @@ import os
 # ****************************************** Constants ******************************************
 # Google API Key used for Maps API - Can use different key here if you have one
 API_KEY = os.environ.get('MAPS_API_KEY')
-#API_KEY = os.environ.get('MAPS_API_KEY')
+#API_KEY = 'put own key here'
 # Name of output file and its path
 output_file = ''
 # Name of input file and its path, '.' is the current working directory
 input_file = "./data-raw.csv"
+#input_file = "./data-raw-excel.xlsx"
 
 # ******************************** Column Names - Edit as needed ********************************
 # Column name in input_file that contains the full address
@@ -69,18 +70,12 @@ def main():
     df_crossStreet = df[bool_series1].copy()
     #format for list --> 'address, city'
     crossStreetAddresses = (df_crossStreet[cross_street_column] + ',' + df_crossStreet[city_column]).tolist()
-    
-    for address in crossStreetAddresses:
-        print('cross streets' , address)
 
     #Handle where address column not null, so address location
     bool_series2 = pd.notnull(df[address_column])
     df_addresses = df[bool_series2].copy()
     #format for list --> 'address, city'
     addresses = (df_addresses[address_column] + ',' + df_addresses[city_column]).tolist()
-    
-    for address in addresses:
-        print(address)
 
     print('\n\n Combining Lists Now... \n\n')
 
@@ -96,7 +91,8 @@ def main():
     for location in combinedLocations:
         geocodedResults.append(geocode(location))
 
-
+    for result in geocodedResults:
+        print('\n', result,'\n')
 
 if __name__ == "__main__":
     main()
