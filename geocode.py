@@ -90,12 +90,13 @@ def plotResults(results):
         lat = result['latitude']
         lon = result['longitude']
         print(lat,lon)
+        gmap.marker(lat,lon,"blue", marker=False)
 
         #draw circle around marker, radius in meters
         #200 feet = 60.96 meters
-        gmap.circle(48.1013714, -122.2271894, 60.96)
+        gmap.circle(lat, lon, 18.28)
 
-    #where to draw map (. = current directory)
+    #where to draw map . = current directory
     gmap.draw(".\map.html")
 
 
