@@ -6,7 +6,7 @@ import requests
 import os
 import gmplot
 
-# ****************************************** Constants ******************************************
+# ****************************************** Constants *******************************************
 # Google API Key used for Maps API - Can use different key here if you have one
 API_KEY = os.environ.get('MAPS_API_KEY')
 #API_KEY = 'put own key here'
@@ -14,9 +14,11 @@ API_KEY = os.environ.get('MAPS_API_KEY')
 OUTPUT_FILE = 'testOutput.csv'
 # Name of input file and its path, '.' is the current working directory
 INPUT_FILE = "./data-raw.csv"
-#INPUT_FILE = "./data-raw-excel.xlsx"
+CENTER_MAP_LAT = ''
+CENTER_MAP_LON = ''
 
-# ******************************** Column Names - Edit as needed ********************************
+# ****************************************** Column Names *****************************************
+# Edit the column names as needed to fit the data coming in to the program.
 # Column name in INPUT_FILE that contains the full address
 ADDRESS_COLUMN = ("ADDRESSSTREET")
 # City
@@ -24,8 +26,16 @@ CITY_COLUMN = ("City Place")
 # If no address, will have cross street to use
 CROSS_STREET_COLUMN = ("CROSSSTREET")
 
-# ************************************ Function Definitions **************************************
-# Function to get results from google
+# ************************************* Function Definitions ****************************************
+
+# ******************************************** Geocode **********************************************
+# Function to geocode addresses given to it and format them correctly. The complete_response_string
+#                   argument is optional and is False by default.
+# Preconditions:    The address being given to it is correct and able to be geocoded by Google's API. The
+#                   The complete_response_string is a boolean value that is either left blank or 
+#                   set to true. 
+# Postconditions:   The function will return a dict to the calling function / object. It will include
+#                   all of the information that was identified from the Google API.
 def geocode(address, complete_response_string=False):
     print('Geocoding...')
 
@@ -71,19 +81,27 @@ def geocode(address, complete_response_string=False):
 
     return output
 
-# Function to parse data and get addresses to put in list
-# Returns list of addresses
+# ****************************************** getAddresses **********************************************
+# Currently getAddress loop is running in main() --> may move function in here         
+# Preconditions:    R
+# Postconditions:   T
+# Notes:            N
 def getAddresses():
     print('Getting Addresses...')
 
 
-# Function to write to map
+# ******************************************** plotResults **********************************************
+# Function to plot the locations/results that have been geocoded. Takes a parameter of results which is
+#                   a list of dicts of geocoded locations.         
+# Preconditions:    Results has geocoded location information populated in it. Everything is formatted
+#                   correctly.
+# Postconditions:   T
+# Notes:            #200 feet = 60.96 meters / 100 feet = xx.xx meters / 60 feet = 18.28 meters
 def plotResults(results):
     print('Plotting Results...')
 
     #center map and zoom level
     gmap = gmplot.GoogleMapPlotter(47.608013,-122.335167, 10, apikey=API_KEY)
-
     for result in results:
         print('this is a result in the result list!')
         gmap.coloricon = "http://www.googlemapsmarkers.com/v1/%s/"
@@ -92,8 +110,7 @@ def plotResults(results):
         print(lat,lon)
         gmap.marker(lat,lon,"blue", marker=False)
 
-        #draw circle around marker, radius in meters
-        #200 feet = 60.96 meters
+        #draw circle around marker, radius in meters       
         gmap.circle(lat, lon, 18.28)
 
     #where to draw map . = current directory
@@ -104,11 +121,9 @@ def plotResults(results):
 def main():
     print('This is Main...')
     df = pd.read_csv(INPUT_FILE)
-    #print(df)
 
     # Handle where address column is null, so cross street location
     bool_series1 = pd.notnull(df[CROSS_STREET_COLUMN])
-    #print(df[bool_series])
     df_crossStreet = df[bool_series1].copy()
     #format for list --> 'address, city'
     crossStreetAddresses = (df_crossStreet[CROSS_STREET_COLUMN] + ',' + df_crossStreet[CITY_COLUMN]).tolist()
@@ -119,8 +134,7 @@ def main():
     #format for list --> 'address, city'
     addresses = (df_addresses[ADDRESS_COLUMN] + ',' + df_addresses[CITY_COLUMN]).tolist()
 
-    print('\n\n Combining Lists Now... \n\n')
-
+    #Combine lists of address locations and cross street locations
     combinedLocations = crossStreetAddresses + addresses
     
     for location in combinedLocations:
