@@ -14,8 +14,8 @@ API_KEY = os.environ.get('MAPS_API_KEY')
 OUTPUT_FILE = 'testOutput.csv'
 # Name of input file and its path, '.' is the current working directory
 INPUT_FILE = "./data-raw.csv"
-CENTER_MAP_LAT = ''
-CENTER_MAP_LON = ''
+CENTER_MAP_LAT = '47.608013'
+CENTER_MAP_LON = '-122.335167'
 
 # ****************************************** Column Names *****************************************
 # Edit the column names as needed to fit the data coming in to the program.
@@ -36,8 +36,9 @@ CROSS_STREET_COLUMN = ("CROSSSTREET")
 #                   set to true. 
 # Postconditions:   The function will return a dict to the calling function / object. It will include
 #                   all of the information that was identified from the Google API.
+# Notes:            N
 def geocode(address, complete_response_string=False):
-    print('Geocoding...')
+    print('\nGeocoding...\n\n')
 
     params = {
     'key': API_KEY,
@@ -76,6 +77,7 @@ def geocode(address, complete_response_string=False):
     output['input_string'] = address
     output['number_of_results'] = len(response['results'])
     output['status'] = response.get('status')
+    # Conditional if user wants complete string, then add. Otherwise do not add
     if complete_response_string:
         output['response'] = response
 
@@ -86,42 +88,8 @@ def geocode(address, complete_response_string=False):
 # Preconditions:    R
 # Postconditions:   T
 # Notes:            N
-def getAddresses():
-    print('Getting Addresses...')
-
-
-# ******************************************** plotResults **********************************************
-# Function to plot the locations/results that have been geocoded. Takes a parameter of results which is
-#                   a list of dicts of geocoded locations.         
-# Preconditions:    Results has geocoded location information populated in it. Everything is formatted
-#                   correctly.
-# Postconditions:   T
-# Notes:            #200 feet = 60.96 meters / 100 feet = xx.xx meters / 60 feet = 18.28 meters
-def plotResults(results):
-    print('Plotting Results...')
-
-    #center map and zoom level
-    gmap = gmplot.GoogleMapPlotter(47.608013,-122.335167, 10, apikey=API_KEY)
-    for result in results:
-        print('this is a result in the result list!')
-        gmap.coloricon = "http://www.googlemapsmarkers.com/v1/%s/"
-        lat = result['latitude']
-        lon = result['longitude']
-        print(lat,lon)
-        gmap.marker(lat,lon,"blue", marker=False)
-
-        #draw circle around marker, radius in meters       
-        gmap.circle(lat, lon, 18.28)
-
-    #where to draw map . = current directory
-    gmap.draw(".\map.html")
-
-
-# ************************************** Main Function ******************************************
-def main():
-    print('This is Main...')
-    df = pd.read_csv(INPUT_FILE)
-
+def getAddresses(df):
+    print('\nGetting Addresses...\n\n')
     # Handle where address column is null, so cross street location
     bool_series1 = pd.notnull(df[CROSS_STREET_COLUMN])
     df_crossStreet = df[bool_series1].copy()
@@ -136,7 +104,43 @@ def main():
 
     #Combine lists of address locations and cross street locations
     combinedLocations = crossStreetAddresses + addresses
+
+    return combinedLocations
+
+# ******************************************** plotResults **********************************************
+# Function to plot the locations/results that have been geocoded. Takes a parameter of results which is
+#                   a list of dicts of geocoded locations.         
+# Preconditions:    Results has geocoded location information populated in it. Everything is formatted
+#                   correctly.
+# Postconditions:   T
+# Notes:            #200 feet = 60.96 meters / 100 feet = xx.xx meters / 60 feet = 18.28 meters
+def plotResults(results):
+    print('\nPlotting Results...\n\n')
+
+    #center map and zoom level
+    gmap = gmplot.GoogleMapPlotter(CENTER_MAP_LAT, CENTER_MAP_LON, 10, apikey=API_KEY)
+    for result in results:
+        gmap.coloricon = "http://www.googlemapsmarkers.com/v1/%s/"
+        lat = result['latitude']
+        lon = result['longitude']
+        gmap.marker(lat,lon,"blue", marker=False)
+
+        #draw circle around marker, radius in meters       
+        gmap.circle(lat, lon, 18.28)
+
+    #where to draw map . = current directory
+    gmap.draw(".\map.html")
+
+
+# ************************************** Main Function ******************************************
+def main():
+    print('This is Main...')
+    df = pd.read_csv(INPUT_FILE)
+
+    # Call getAddresses to extract address and store in combinedLocations
+    combinedLocations = getAddresses(df)
     
+    # Using for testing - take out if don't want/need to see each location
     for location in combinedLocations:
         print(location)
 
@@ -154,4 +158,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
