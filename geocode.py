@@ -13,9 +13,12 @@ API_KEY = os.environ.get('MAPS_API_KEY')
 # Name of output file and its path
 OUTPUT_FILE = 'testOutput.csv'
 # Name of input file and its path, '.' is the current working directory
-INPUT_FILE = "./data-raw.csv"
-CENTER_MAP_LAT = '47.608013'
-CENTER_MAP_LON = '-122.335167'
+INPUT_FILE = "./data-raw-short.csv"
+# Only use the below constants to hardcode the location / coordinates
+#CENTER_MAP_LOCATION = 'Seattle WA'
+#CENTER_MAP_LAT = '47.608013'
+#CENTER_MAP_LON = '-122.335167'
+OUTPUT_MAP = '.\map.html'
 
 # ****************************************** Column Names *****************************************
 # Edit the column names as needed to fit the data coming in to the program.
@@ -38,7 +41,7 @@ CROSS_STREET_COLUMN = ("CROSSSTREET")
 #                   all of the information that was identified from the Google API.
 # Notes:            N
 def geocode(address, complete_response_string=False):
-    print('\nGeocoding...\n\n')
+    print('\nGeocoding...\n')
 
     params = {
     'key': API_KEY,
@@ -52,7 +55,6 @@ def geocode(address, complete_response_string=False):
     results = requests.get(base_url, params=params)
     response = results.json()
     response.keys()
-    print(response)
 
     if response['status'] == "OK":
         geometry = response['results'][0]['geometry']
@@ -84,10 +86,14 @@ def geocode(address, complete_response_string=False):
     return output
 
 # ****************************************** getAddresses **********************************************
-# Currently getAddress loop is running in main() --> may move function in here         
-# Preconditions:    R
-# Postconditions:   T
-# Notes:            N
+# Function to take a dataframe object, parse the addresses out of it, and convert to a list of addressable
+#                   locations that can be geocoded. This handles address locations as well as cross-street
+#                   locations.        
+# Preconditions:    df is a dataframe object with appropriate values in it. Column name constants are filled
+#                   out correctly in the constants section at the top of the program. 
+# Postconditions:   Will return a list of combined locations.
+# Notes:            Uses pandas dataframe notnull to identify null column which signals what kind of location
+#                   it is (address or cross-street)
 def getAddresses(df):
     print('\nGetting Addresses...\n\n')
     # Handle where address column is null, so cross street location
@@ -112,13 +118,15 @@ def getAddresses(df):
 #                   a list of dicts of geocoded locations.         
 # Preconditions:    Results has geocoded location information populated in it. Everything is formatted
 #                   correctly.
-# Postconditions:   T
+# Postconditions:   html map will be placed in current directory under name given as identified by the 
+#                   constant value at the top of the program.
 # Notes:            #200 feet = 60.96 meters / 100 feet = xx.xx meters / 60 feet = 18.28 meters
-def plotResults(results):
-    print('\nPlotting Results...\n\n')
+def plotResults(results, centerLat, centerLon):
+    print('\nPlotting Results...\n')
 
     #center map and zoom level
-    gmap = gmplot.GoogleMapPlotter(CENTER_MAP_LAT, CENTER_MAP_LON, 10, apikey=API_KEY)
+    gmap = gmplot.GoogleMapPlotter(centerLat, centerLon, 10, apikey=API_KEY)
+
     for result in results:
         gmap.coloricon = "http://www.googlemapsmarkers.com/v1/%s/"
         lat = result['latitude']
@@ -129,13 +137,36 @@ def plotResults(results):
         gmap.circle(lat, lon, 18.28)
 
     #where to draw map . = current directory
-    gmap.draw(".\map.html")
+    gmap.draw(OUTPUT_MAP)
+
+
+# *************************************** setMapCenterConstants *****************************************
+# Function to set the coordinates of where the map will be centered as defined by user input. User will 
+#                   input a city and state, which will be geocoded and return a result. The result will be
+#                   parsed to get the latitude and longitude. The lat and lon will be returned to the calling
+#                   function and the data will be stored in variables inside of main()               
+# Preconditions:    The location parameter is a valid location that is able to be geocoded and will return
+#                   an acceptable latitude and longitude
+# Postconditions:   Returns the latitude and longitude to the calling function to store in variables
+#                   
+# Notes:            
+def setMapCenterConstants(location):
+    print('\nsetting map center constants...\n')
+    result = geocode(location)
+    lat = result['latitude']
+    lon = result['longitude']
+    return lat,lon
+
 
 
 # ************************************** Main Function ******************************************
 def main():
     print('This is Main...')
     df = pd.read_csv(INPUT_FILE)
+
+    # Stop program and get user input location string
+    CENTER_MAP_LOCATION = input("Enter location to center map (EX: Seattle, WA) : ")
+    CENTER_MAP_LAT, CENTER_MAP_LON = setMapCenterConstants(CENTER_MAP_LOCATION)
 
     # Call getAddresses to extract address and store in combinedLocations
     combinedLocations = getAddresses(df)
@@ -151,7 +182,7 @@ def main():
         geocodedResults.append(geocode(location))
 
     # Plot all found locations to a map
-    plotResults(geocodedResults)
+    plotResults(geocodedResults, CENTER_MAP_LAT, CENTER_MAP_LON)
 
     # Write to csv
     pd.DataFrame(geocodedResults).to_csv(OUTPUT_FILE, encoding='utf8')
