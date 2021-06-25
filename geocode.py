@@ -166,7 +166,7 @@ def main():
     df = pd.read_csv(INPUT_FILE)
 
     # Stop program and get user input location string
-    CENTER_MAP_LOCATION = input("Enter location to center map (EX: Seattle, WA) : ")
+    CENTER_MAP_LOCATION = input("Enter location to center map (EX: Seattle WA) : ")
 
     # Attempt to geocode address given by user. If fail, go to except block.
     try:
