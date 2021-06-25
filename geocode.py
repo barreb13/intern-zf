@@ -6,7 +6,7 @@ import requests
 import os
 import gmplot
 
-# ****************************************** Constants *******************************************
+# ********************************************* Constants *******************************************
 # Google API Key used for Maps API - Can use different key here if you have one
 API_KEY = os.environ.get('MAPS_API_KEY')
 #API_KEY = 'put own key here'
@@ -14,13 +14,14 @@ API_KEY = os.environ.get('MAPS_API_KEY')
 OUTPUT_FILE = 'testOutput.csv'
 # Name of input file and its path, '.' is the current working directory
 INPUT_FILE = "./data-raw-short.csv"
+
 # Only use the below constants to hardcode the location / coordinates
 #CENTER_MAP_LOCATION = 'Seattle WA'
 #CENTER_MAP_LAT = '47.608013'
 #CENTER_MAP_LON = '-122.335167'
 OUTPUT_MAP = '.\map.html'
 
-# ****************************************** Column Names *****************************************
+# ********************************************* Column Names *****************************************
 # Edit the column names as needed to fit the data coming in to the program.
 # Column name in INPUT_FILE that contains the full address
 ADDRESS_COLUMN = ("ADDRESSSTREET")
@@ -29,9 +30,9 @@ CITY_COLUMN = ("City Place")
 # If no address, will have cross street to use
 CROSS_STREET_COLUMN = ("CROSSSTREET")
 
-# ************************************* Function Definitions ****************************************
+# **************************************** Function Definitions ****************************************
 
-# ******************************************** Geocode **********************************************
+# *********************************************** Geocode **********************************************
 # Function to geocode addresses given to it and format them correctly. The complete_response_string
 #                   argument is optional and is False by default.
 # Preconditions:    The address being given to it is correct and able to be geocoded by Google's API. The
@@ -85,7 +86,7 @@ def geocode(address, complete_response_string=False):
 
     return output
 
-# ****************************************** getAddresses **********************************************
+# ********************************************* getAddresses **********************************************
 # Function to take a dataframe object, parse the addresses out of it, and convert to a list of addressable
 #                   locations that can be geocoded. This handles address locations as well as cross-street
 #                   locations.        
@@ -158,34 +159,41 @@ def setMapCenterConstants(location):
     return lat,lon
 
 
-
-# ************************************** Main Function ******************************************
+# ******************************************* Main Function ***********************************************
 def main():
-    print('This is Main...')
+    print('\nThis is Main...')
+    # Read file and put into pandas dataframe
     df = pd.read_csv(INPUT_FILE)
 
     # Stop program and get user input location string
     CENTER_MAP_LOCATION = input("Enter location to center map (EX: Seattle, WA) : ")
-    CENTER_MAP_LAT, CENTER_MAP_LON = setMapCenterConstants(CENTER_MAP_LOCATION)
 
-    # Call getAddresses to extract address and store in combinedLocations
-    combinedLocations = getAddresses(df)
+    # Attempt to geocode address given by user. If fail, go to except block.
+    try:
+        CENTER_MAP_LAT, CENTER_MAP_LON = setMapCenterConstants(CENTER_MAP_LOCATION)
+
+        # Call getAddresses to extract address and store in combinedLocations
+        combinedLocations = getAddresses(df)
+        
+        # Using for testing - take out if don't want/need to see each location
+        for location in combinedLocations:
+            print(location)
+
+        # List for storing results
+        geocodedResults = []
+
+        for location in combinedLocations:
+            geocodedResults.append(geocode(location))
+
+        # Plot all found locations to a map
+        plotResults(geocodedResults, CENTER_MAP_LAT, CENTER_MAP_LON)
+
+        # Write to csv
+        pd.DataFrame(geocodedResults).to_csv(OUTPUT_FILE, encoding='utf8')
     
-    # Using for testing - take out if don't want/need to see each location
-    for location in combinedLocations:
-        print(location)
-
-    # List for storing results
-    geocodedResults = []
-
-    for location in combinedLocations:
-        geocodedResults.append(geocode(location))
-
-    # Plot all found locations to a map
-    plotResults(geocodedResults, CENTER_MAP_LAT, CENTER_MAP_LON)
-
-    # Write to csv
-    pd.DataFrame(geocodedResults).to_csv(OUTPUT_FILE, encoding='utf8')
+    # Could not geocode location
+    except:
+        print('Error - Bad Location to Center Map')
 
 if __name__ == "__main__":
     main()
