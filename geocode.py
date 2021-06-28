@@ -6,12 +6,12 @@ import requests
 import os
 import gmplot
 
-# ********************************************* Constants *******************************************
+# ********************************************* Constants **********************************************
 # Google API Key used for Maps API - Can use different key here if you have one
 API_KEY = os.environ.get('MAPS_API_KEY')
 #API_KEY = 'put own key here'
 # Name of output file and its path
-OUTPUT_FILE = 'testOutput.csv'
+OUTPUT_FILE = 'outputData.csv'
 # Name of input file and its path, '.' is the current working directory
 INPUT_FILE = "./data-raw-short.csv"
 
@@ -21,8 +21,9 @@ INPUT_FILE = "./data-raw-short.csv"
 #CENTER_MAP_LON = '-122.335167'
 OUTPUT_MAP = '.\map.html'
 
-# ********************************************* Column Names *****************************************
-# Edit the column names as needed to fit the data coming in to the program.
+# ********************************************* Column Names *******************************************
+# Edit the column names as needed to fit the data coming in to the program. These column names are the 
+#                   column labels in the csv file that is INPUT_FILE
 # Column name in INPUT_FILE that contains the full address
 ADDRESS_COLUMN = ("ADDRESSSTREET")
 # City
@@ -86,7 +87,7 @@ def geocode(address, complete_response_string=False):
 
     return output
 
-# ********************************************* getAddresses **********************************************
+# ********************************************* getAddresses *******************************************
 # Function to take a dataframe object, parse the addresses out of it, and convert to a list of addressable
 #                   locations that can be geocoded. This handles address locations as well as cross-street
 #                   locations.        
@@ -114,7 +115,7 @@ def getAddresses(df):
 
     return combinedLocations
 
-# ******************************************** plotResults **********************************************
+# ******************************************** plotResults *********************************************
 # Function to plot the locations/results that have been geocoded. Takes a parameter of results which is
 #                   a list of dicts of geocoded locations.         
 # Preconditions:    Results has geocoded location information populated in it. Everything is formatted
@@ -141,7 +142,7 @@ def plotResults(results, centerLat, centerLon):
     gmap.draw(OUTPUT_MAP)
 
 
-# *************************************** setMapCenterConstants *****************************************
+# *************************************** setMapCenterConstants ****************************************
 # Function to set the coordinates of where the map will be centered as defined by user input. User will 
 #                   input a city and state, which will be geocoded and return a result. The result will be
 #                   parsed to get the latitude and longitude. The lat and lon will be returned to the calling
@@ -159,7 +160,7 @@ def setMapCenterConstants(location):
     return lat,lon
 
 
-# ******************************************* Main Function ***********************************************
+# ******************************************* Main Function ********************************************
 def main():
     print('\nThis is Main...')
     # Read file and put into pandas dataframe
